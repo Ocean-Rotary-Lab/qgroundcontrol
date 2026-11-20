@@ -2,7 +2,6 @@
 # Single source for the QGC builder images. Pick a variant with --target:
 #   docker build -f deploy/docker/Dockerfile --target linux       .   # x86_64 AppImage
 #   docker build -f deploy/docker/Dockerfile --target linux-cross .   # aarch64 cross
-#   docker build -f deploy/docker/Dockerfile --target android     .   # Android APK
 # run-docker.sh / plan_docker_builds.py drive --target + build-args; non-Ubuntu
 # Linux variants reuse the `linux` target with base/bootstrap/backend overridden.
 
@@ -107,60 +106,6 @@ RUN sh /usr/local/lib/qgc/install-qt.sh linux desktop linux_gcc_64 && \
       echo "export QT_ROOT_DIR=/opt/Qt/${QT_VERSION}/gcc_arm64"; \
       echo 'export PATH=$QT_HOST_PATH/bin:$PATH'; } > /etc/profile.d/qt-cross.sh && \
     rm -rf /tmp/tools
-COPY deploy/docker/entrypoint.sh /entrypoint.sh
-ENTRYPOINT ["/bin/bash", "-l", "/entrypoint.sh"]
-CMD ["Release"]
-
-# ---------- android: Android APK build (SDK/NDK + Qt android target) ----------
-FROM base AS android
-COPY tools/setup/install_dependencies/ /tmp/tools/setup/install_dependencies/
-RUN python3 /tmp/tools/setup/install_dependencies --platform debian && \
-    python3 /tmp/tools/setup/read_config.py --export bash > /etc/profile.d/qgc.sh && \
-    . /etc/profile.d/qgc.sh && \
-    apt-get update && \
-    apt-get install -y --no-install-recommends openjdk-${ANDROID_JAVA_VERSION}-jdk && \
-    rm -rf /var/lib/apt/lists/*
-
-ENV ANDROID_SDK_ROOT=/opt/android-sdk
-ENV ANDROID_HOME=$ANDROID_SDK_ROOT
-RUN . /etc/profile.d/qgc.sh && \
-    mkdir -p $ANDROID_SDK_ROOT/cmdline-tools/latest && \
-    wget "https://dl.google.com/android/repository/commandlinetools-linux-${ANDROID_CMDLINE_TOOLS}_latest.zip" -O /opt/cmdline-tools.zip && \
-    # Pinned to android_cmdline_tools 14742923 (.github/build-config.json); update both together.
-    echo "04453066b540409d975c676d781da1477479dde3761310f1a7eb92a1dfb15af7  /opt/cmdline-tools.zip" | sha256sum -c - && \
-    unzip /opt/cmdline-tools.zip -d $ANDROID_SDK_ROOT/cmdline-tools && \
-    mv $ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools/* $ANDROID_SDK_ROOT/cmdline-tools/latest/ && \
-    rm -rf $ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools && \
-    rm /opt/cmdline-tools.zip && \
-    yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT --licenses && \
-    $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT \
-        "platform-tools" \
-        "platforms;android-${ANDROID_PLATFORM}" \
-        "build-tools;${ANDROID_BUILD_TOOLS}" \
-        "ndk;${ANDROID_NDK_FULL_VERSION}" && \
-    echo "export ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/${ANDROID_NDK_FULL_VERSION}" >> /etc/profile.d/qgc.sh && \
-    echo "export ANDROID_BUILD_TOOLS_DIR=$ANDROID_SDK_ROOT/build-tools/${ANDROID_BUILD_TOOLS}" >> /etc/profile.d/qgc.sh
-
-ENV QT_PATH="/opt/Qt"
-ENV QT_HOST="linux"
-ENV QT_HOST_ARCH="linux_gcc_64"
-ENV QT_HOST_DIR="gcc_64"
-ENV QT_TARGET="android"
-ENV QT_TARGET_ARCH_ARM64="android_arm64_v8a"
-# aqtinstall: --arch=linux_gcc_64 but creates gcc_64/ dir.
-RUN sh /usr/local/lib/qgc/install-qt.sh "$QT_HOST" desktop "$QT_HOST_ARCH" && \
-    sh /usr/local/lib/qgc/install-qt.sh all_os "$QT_TARGET" "$QT_TARGET_ARCH_ARM64" --autodesktop && \
-    . /etc/profile.d/qgc.sh && \
-    echo "export QT_ROOT_DIR_ARM64=$QT_PATH/$QT_VERSION/$QT_TARGET_ARCH_ARM64" >> /etc/profile.d/qgc.sh && \
-    echo "export QT_HOST_PATH=$QT_PATH/$QT_VERSION/$QT_HOST_DIR" >> /etc/profile.d/qgc.sh
-
-RUN . /etc/profile.d/qgc.sh && \
-    JAVA_BIN="$(readlink -f "$(command -v javac)")" && \
-    JAVA_HOME="$(dirname "$(dirname "${JAVA_BIN}")")" && \
-    echo "export JAVA_HOME=${JAVA_HOME}" >> /etc/profile.d/qgc.sh
-RUN echo 'export PATH=$JAVA_HOME/bin:/usr/lib/ccache:$QT_HOST_PATH/bin:$QT_ROOT_DIR_ARM64/bin:$PATH:$ANDROID_SDK_ROOT/tools:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_BUILD_TOOLS_DIR:$ANDROID_NDK_ROOT' >> /etc/profile.d/qgc.sh
-
-RUN rm -rf /tmp/tools
 COPY deploy/docker/entrypoint.sh /entrypoint.sh
 ENTRYPOINT ["/bin/bash", "-l", "/entrypoint.sh"]
 CMD ["Release"]

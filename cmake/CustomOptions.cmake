@@ -53,7 +53,7 @@ cmake_dependent_option(QGC_ENABLE_COVERAGE "Enable code coverage instrumentation
 cmake_dependent_option(QT_QML_NO_CACHEGEN "Skip qmlcachegen (faster Debug builds, slower QML startup)" ON "_QGC_DEBUG_BUILD" OFF)
 option(QGC_ENABLE_CLANG_TIDY "Enable clang-tidy static analysis during build" OFF)
 option(QGC_TIME_TRACE "Emit per-TU Clang -ftime-trace JSON for build profiling (Clang only)" OFF)
-option(QGC_SPLIT_DWARF "Use -gsplit-dwarf + --gdb-index for faster Debug links (Linux/Android ELF only; marginal win with mold)" OFF)
+option(QGC_SPLIT_DWARF "Use -gsplit-dwarf + --gdb-index for faster Debug links (Linux ELF only; marginal win with mold)" OFF)
 
 # Git options
 option(GIT_SUBMODULE "Update submodules during configuration" OFF)
@@ -80,13 +80,7 @@ endif()
 
 # Link parallelism (Ninja only)
 set(QGC_LINK_PARALLEL_LEVEL 2 CACHE STRING "Maximum parallel link jobs (prevents OOM during LTO)")
-# ---- GStreamer SDK download / debug ----
-# Fail closed: only the SDK-download platforms (Android/macOS/iOS/Windows) hit this path;
-# Linux uses system pkg-config and never downloads, so ON is a no-op there.
-option(GStreamer_REQUIRE_CHECKSUM "Fail if an SDK download's checksum cannot be verified (set OFF to bypass)" ON)
 option(GStreamer_DEBUG "Print GStreamer CMake debug messages" OFF)
-set(QGC_GST_DOWNLOAD_TIMEOUT "" CACHE STRING "GStreamer SDK download wall-clock timeout (seconds, default 1200)")
-set(QGC_GST_DOWNLOAD_INACTIVITY_TIMEOUT "" CACHE STRING "GStreamer SDK download inactivity timeout (seconds, default 60)")
 
 # Coverage thresholds
 set(QGC_COVERAGE_LINE_THRESHOLD 30 CACHE STRING "Minimum line coverage percentage")
@@ -140,34 +134,6 @@ option(QGC_DISABLE_PX4_PLUGIN_FACTORY "Disable PX4 plugin factory" OFF)
 # ============================================================================
 
 # ----------------------------------------------------------------------------
-# Android Platform
-# ----------------------------------------------------------------------------
-set(QGC_QT_ANDROID_COMPILE_SDK_VERSION "${QGC_CONFIG_ANDROID_PLATFORM}" CACHE STRING "Android compile SDK version")
-set(QGC_QT_ANDROID_TARGET_SDK_VERSION "${QGC_CONFIG_ANDROID_PLATFORM}" CACHE STRING "Android target SDK version")
-set(QGC_QT_ANDROID_MIN_SDK_VERSION "${QGC_CONFIG_ANDROID_MIN_SDK}" CACHE STRING "Android minimum SDK version")
-set(QGC_ANDROID_PACKAGE_NAME "${QGC_PACKAGE_NAME}" CACHE STRING "Android package identifier")
-set(QGC_ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_SOURCE_DIR}/android" CACHE PATH "Android package source directory")
-set(QT_ANDROID_DEPLOYMENT_TYPE "" CACHE STRING "Android deployment type (empty or Release)")
-option(QT_ANDROID_SIGN_APK "Enable APK signing" OFF)
-option(QT_ANDROID_SIGN_AAB "Enable AAB signing" OFF)
-option(QT_USE_TARGET_ANDROID_BUILD_DIR "Use target-specific Android build directory" OFF)
-
-# ----------------------------------------------------------------------------
-# macOS Platform
-# ----------------------------------------------------------------------------
-set(QGC_MACOS_PLIST_PATH "${CMAKE_SOURCE_DIR}/deploy/macos/MacOSXBundleInfo.plist.in" CACHE FILEPATH "macOS Info.plist template path")
-set(QGC_MACOS_BUNDLE_ID "${QGC_PACKAGE_NAME}" CACHE STRING "macOS bundle identifier")
-set(QGC_MACOS_ICON_PATH "${CMAKE_SOURCE_DIR}/deploy/macos/qgroundcontrol.icns" CACHE FILEPATH "macOS application icon path")
-set(QGC_MACOS_ENTITLEMENTS_PATH "${CMAKE_SOURCE_DIR}/deploy/macos/qgroundcontrol.entitlements" CACHE FILEPATH "macOS entitlements file path")
-option(QGC_MACOS_UNIVERSAL_BUILD "Build macOS universal binary (x86_64h + arm64)" ON)
-
-# ----------------------------------------------------------------------------
-# iOS Platform
-# ----------------------------------------------------------------------------
-set(QGC_IOS_DEPLOYMENT_TARGET "${QGC_CONFIG_IOS_DEPLOYMENT_TARGET}" CACHE STRING "iOS minimum deployment target")
-set(QGC_IOS_TARGETED_DEVICE_FAMILY "1,2" CACHE STRING "iOS targeted device family (1=iPhone, 2=iPad)")
-
-# ----------------------------------------------------------------------------
 # Linux Platform
 # ----------------------------------------------------------------------------
 # Distro-aware defaults for native (non-Docker) builds. Docker builds pass these
@@ -195,26 +161,10 @@ set(QGC_APPIMAGE_APPRUN_PATH "${CMAKE_SOURCE_DIR}/deploy/linux/AppRun" CACHE FIL
 set(QGC_APPIMAGE_DESKTOP_ENTRY_PATH "${CMAKE_SOURCE_DIR}/deploy/linux/org.mavlink.qgroundcontrol.desktop.in" CACHE FILEPATH "AppImage desktop entry path")
 set(QGC_APPIMAGE_METADATA_PATH "${CMAKE_SOURCE_DIR}/deploy/linux/org.mavlink.qgroundcontrol.appdata.xml.in" CACHE FILEPATH "AppImage metadata path")
 set(QGC_APPIMAGE_APPDATA_DEVELOPER "qgroundcontrol" CACHE STRING "AppImage developer name")
-# Optional CPack native package built by the `qgc-package` target, alongside the
-# platform's default installer (AppImage / NSIS .exe / DMG). Empty = installer only.
-# WIN32/APPLE (not MACOS/LINUX) because Toolchain.cmake — which sets those — is
-# included after this file.
-if(WIN32)
-    set(_qgc_cpack_strings "" "NSIS" "IFW" "TXZ")
-elseif(APPLE)
-    set(_qgc_cpack_strings "" "DragNDrop" "Bundle" "productbuild" "IFW" "TXZ")
-else()
-    set(_qgc_cpack_strings "" "DEB" "RPM" "TXZ")
-endif()
+# Linux native package generators.
+set(_qgc_cpack_strings "" "DEB" "RPM" "TXZ")
 set(QGC_CPACK_GENERATOR "${_qgc_cpack_default}" CACHE STRING "Optional CPack generator for the qgc-package target (alongside the default installer)")
 set_property(CACHE QGC_CPACK_GENERATOR PROPERTY STRINGS ${_qgc_cpack_strings})
-
-# ----------------------------------------------------------------------------
-# Windows Platform
-# ----------------------------------------------------------------------------
-set(QGC_WINDOWS_INSTALL_HEADER_PATH "${CMAKE_SOURCE_DIR}/deploy/windows/installheader.bmp" CACHE FILEPATH "Windows installer header image")
-set(QGC_WINDOWS_ICON_PATH "${CMAKE_SOURCE_DIR}/deploy/windows/WindowsQGC.ico" CACHE FILEPATH "Windows application icon")
-set(QGC_WINDOWS_RESOURCE_FILE_PATH "${CMAKE_SOURCE_DIR}/deploy/windows/QGroundControl.rc" CACHE FILEPATH "Windows resource file")
 
 # ============================================================================
 # Qt Configuration

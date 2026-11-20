@@ -3,7 +3,7 @@
 #
 # Usage:
 #   deploy/docker/run-docker.sh <variant> [build-type]
-#     variants:   ubuntu | ubuntu-2204 | ubuntu-2604 | debian | fedora | arch | aarch64 | android
+#     variants:   ubuntu | ubuntu-2204 | ubuntu-2604 | debian | fedora | arch | aarch64
 #     build-type: Release (default) | Debug | RelWithDebInfo | MinSizeRel
 #
 # Env:

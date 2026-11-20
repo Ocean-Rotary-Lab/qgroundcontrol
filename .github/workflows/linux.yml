@@ -76,7 +76,7 @@ jobs:
           show_costs: summary
 
       # harden-runner is x86_64 Linux only — skip on the ubuntu-24.04-arm matrix entry.
-      # macOS/Windows runners no-op silently, so other workflows don't need the guard.
+      # ARM64 uses a different runner, so this step remains conditional.
       - name: Harden Runner
         if: runner.arch != 'ARM64'
         uses: step-security/harden-runner@v2

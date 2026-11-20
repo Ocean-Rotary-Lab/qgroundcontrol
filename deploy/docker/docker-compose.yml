@@ -141,17 +141,3 @@ services:
     volumes:
       - ../..:/project/source
       - ../../build:/project/build
-  android:
-    build:
-      context: ../..
-      dockerfile: deploy/docker/Dockerfile
-      target: android
-    image: qgc-android-docker
-    user: "${QGC_UID:-1000}:${QGC_GID:-1000}"
-    environment:
-      HOME: /tmp
-      CLEAN_BUILD: "${CLEAN_BUILD:-0}"
-      JOBS: "${JOBS:-}"
-    volumes:
-      - ../..:/project/source
-      - ../../build:/project/build

@@ -23,9 +23,6 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .build_config import (
-        derive_ios_qt_modules as derive_ios_qt_modules,
-    )
-    from .build_config import (
         export_build_config_values as export_build_config_values,
     )
     from .build_config import (
@@ -202,7 +199,6 @@ _LAZY_SYMBOLS: dict[str, str] = {
     "load_build_config": "build_config",
     "get_build_config_value": "build_config",
     "export_build_config_values": "build_config",
-    "derive_ios_qt_modules": "build_config",
     "parse_created_at": "github_runs",
     "is_newer_run": "github_runs",
     "select_latest_runs_by_name": "github_runs",

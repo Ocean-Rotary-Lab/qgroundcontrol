@@ -24,19 +24,11 @@ and mission planning for any *MAVLink-enabled* drone, including *PX4* and *ArduP
 - **Video streaming** — GStreamer-based UDP RTP / RTSP video with recording in the Flight Display.
 - **Multi-vehicle** — connect to and monitor multiple vehicles simultaneously.
 - **MAVLink tooling** — built-in MAVLink Inspector, console, and log download/analysis.
-- **Cross-platform** — Windows, macOS, Linux, Android, and iOS from a single codebase.
+- **Linux** — built and packaged for Linux desktops.
 
 ## Download
 
-Grab the latest stable build for your platform, or see all assets on the
-[releases page](https://github.com/mavlink/QGroundControl/releases/latest):
-
-<p align="center">
-  <a href="https://github.com/mavlink/QGroundControl/releases/latest/download/QGroundControl-installer.exe"><img src="https://img.shields.io/badge/Windows-0078D6?logo=windows&logoColor=white" alt="Windows"></a>
-  <a href="https://github.com/mavlink/QGroundControl/releases/latest/download/QGroundControl.dmg"><img src="https://img.shields.io/badge/macOS-000000?logo=apple&logoColor=white" alt="macOS"></a>
-  <a href="https://github.com/mavlink/QGroundControl/releases/latest/download/QGroundControl-x86_64.AppImage"><img src="https://img.shields.io/badge/Linux-FCC624?logo=linux&logoColor=black" alt="Linux (AppImage)"></a>
-  <a href="https://github.com/mavlink/QGroundControl/releases/latest/download/QGroundControl.apk"><img src="https://img.shields.io/badge/Android-3DDC84?logo=android&logoColor=white" alt="Android"></a>
-</p>
+Linux packages are available on the [releases page](https://github.com/Ocean-Rotary-Lab/qgroundcontrol/releases).
 
 ## Links
 

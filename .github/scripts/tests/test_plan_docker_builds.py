@@ -41,7 +41,7 @@ _LINUX_ARCH_BUILD_ARGS = "\n".join(
 
 
 def test_plan_builds_pull_request_filters_by_changes():
-    plan = plan_builds("pull_request", linux_changed=True, android_changed=False)
+    plan = plan_builds("pull_request", linux_changed=True)
     assert plan["has_jobs"] is True
     assert plan["matrix"]["include"] == [
         {
@@ -111,7 +111,7 @@ def test_plan_builds_pull_request_filters_by_changes():
 
 
 def test_native_package_patterns_per_distro():
-    include = plan_builds("push", linux_changed=False, android_changed=False)["matrix"]["include"]
+    include = plan_builds("push", linux_changed=False)["matrix"]["include"]
     pkg = {e["platform"]: e["package_pattern"] for e in include}
     assert pkg["Linux-Ubuntu-24.04"] == "*.deb"
     assert pkg["Linux-Ubuntu-22.04"] == "*.deb"
@@ -120,11 +120,10 @@ def test_native_package_patterns_per_distro():
     assert pkg["Linux-Fedora"] == "*.rpm"
     assert pkg["Linux-Arch"] == "*.pkg.tar.zst"
     assert pkg["Linux-aarch64"] == ""
-    assert pkg["Android"] == ""
 
 
 def test_2204_reuses_linux_target_with_distinct_cache_variant():
-    include = plan_builds("push", linux_changed=False, android_changed=False)["matrix"]["include"]
+    include = plan_builds("push", linux_changed=False)["matrix"]["include"]
     by_platform = {e["platform"]: e for e in include}
     u2404, u2204 = by_platform["Linux-Ubuntu-24.04"], by_platform["Linux-Ubuntu-22.04"]
     assert u2404["target"] == u2204["target"]
@@ -134,7 +133,7 @@ def test_2204_reuses_linux_target_with_distinct_cache_variant():
 
 
 def test_non_ubuntu_linux_variants_reuse_linux_target():
-    include = plan_builds("push", linux_changed=False, android_changed=False)["matrix"]["include"]
+    include = plan_builds("push", linux_changed=False)["matrix"]["include"]
     by_platform = {e["platform"]: e for e in include}
     for name in ("Linux-Debian", "Linux-Fedora", "Linux-Arch"):
         assert by_platform[name]["target"] == "linux"
@@ -144,20 +143,15 @@ def test_non_ubuntu_linux_variants_reuse_linux_target():
     assert "DEP_PLATFORM=arch" in by_platform["Linux-Arch"]["build_args"]
 
 
-def test_plan_builds_pull_request_android_only_excludes_linux():
-    plan = plan_builds("pull_request", linux_changed=False, android_changed=True)
-    assert [e["target"] for e in plan["matrix"]["include"]] == ["android"]
-
-
 def test_plan_builds_pull_request_no_changes_yields_empty_matrix():
-    plan = plan_builds("pull_request", linux_changed=False, android_changed=False)
+    plan = plan_builds("pull_request", linux_changed=False)
     assert plan["has_jobs"] is False
     assert plan["matrix"]["include"] == []
 
 
 def test_plan_builds_push_includes_all():
-    plan = plan_builds("push", linux_changed=False, android_changed=False)
-    assert len(plan["matrix"]["include"]) == 8
+    plan = plan_builds("push", linux_changed=False)
+    assert len(plan["matrix"]["include"]) == 7
     assert [e["platform"] for e in plan["matrix"]["include"]] == [
         "Linux-Ubuntu-24.04",
         "Linux-Ubuntu-22.04",
@@ -166,7 +160,6 @@ def test_plan_builds_push_includes_all():
         "Linux-Fedora",
         "Linux-Arch",
         "Linux-aarch64",
-        "Android",
     ]
 
 
@@ -185,7 +178,7 @@ def test_every_variant_has_required_fields():
     }
     for v in load_variants():
         assert required <= set(v), f"{v.get('id')} missing {required - set(v)}"
-        assert v["selector"] in ("linux", "android")
+        assert v["selector"] in ("linux",)
 
 
 def test_variant_info_helper_matches_json():

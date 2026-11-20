@@ -34,7 +34,7 @@ def build_args_str(build_args: dict[str, str]) -> str:
     return "\n".join(f"{key}={value}" for key, value in build_args.items())
 
 
-def plan_builds(event_name: str, linux_changed: bool, android_changed: bool) -> dict[str, Any]:
+def plan_builds(event_name: str, linux_changed: bool) -> dict[str, Any]:
     """Return workflow matrix and a has_jobs flag.
 
     Returns {"matrix": {"include": [...]}, "has_jobs": bool}. Typed as
@@ -43,7 +43,6 @@ def plan_builds(event_name: str, linux_changed: bool, android_changed: bool) -> 
     """
     selected = {
         "linux": event_name != "pull_request" or linux_changed,
-        "android": event_name != "pull_request" or android_changed,
     }
 
     include: list[dict[str, Any]] = [
@@ -68,7 +67,6 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Plan Docker workflow builds.")
     parser.add_argument("--event-name", default=os.environ.get("EVENT_NAME", ""))
     parser.add_argument("--linux", default=os.environ.get("LINUX", "false"))
-    parser.add_argument("--android", default=os.environ.get("ANDROID", "false"))
     return parser.parse_args(argv)
 
 
@@ -78,7 +76,6 @@ def main(argv: list[str] | None = None) -> int:
     plan = plan_builds(
         args.event_name,
         parse_bool(args.linux),
-        parse_bool(args.android),
     )
     matrix_json = json.dumps(plan["matrix"], separators=(",", ":"))
     print(matrix_json)

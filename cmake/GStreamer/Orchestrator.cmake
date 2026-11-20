@@ -1,27 +1,12 @@
 include("${CMAKE_CURRENT_LIST_DIR}/Helpers.cmake")
 
 if(NOT DEFINED GStreamer_FIND_VERSION)
-    if(LINUX AND NOT ANDROID)
-        set(GStreamer_FIND_VERSION ${QGC_CONFIG_GSTREAMER_MIN_VERSION})
-    elseif(WIN32 AND NOT ANDROID)
-        set(GStreamer_FIND_VERSION ${QGC_CONFIG_GSTREAMER_WIN_VERSION})
-    elseif(ANDROID)
-        set(GStreamer_FIND_VERSION ${QGC_CONFIG_GSTREAMER_ANDROID_VERSION})
-    elseif(IOS)
-        set(GStreamer_FIND_VERSION ${QGC_CONFIG_GSTREAMER_IOS_VERSION})
-    elseif(MACOS)
-        set(GStreamer_FIND_VERSION ${QGC_CONFIG_GSTREAMER_MACOS_VERSION})
-    else()
-        # Defense-in-depth: every supported platform is covered above; this
-        # fires only if a new platform bool is added without a version branch.
-        message(WARNING "GStreamer: unrecognized platform — using fallback version ${QGC_CONFIG_GSTREAMER_VERSION}")
-        set(GStreamer_FIND_VERSION ${QGC_CONFIG_GSTREAMER_VERSION})
-    endif()
+    set(GStreamer_FIND_VERSION ${QGC_CONFIG_GSTREAMER_MIN_VERSION})
 endif()
 
 if(NOT GStreamer_FIND_VERSION)
     message(FATAL_ERROR "GStreamer version not configured. Ensure BuildConfig.cmake has been included "
-        "and .github/build-config.json contains the appropriate gstreamer.version.<platform> entry.")
+        "and .github/build-config.json contains gstreamer.version.minimum.")
 endif()
 
 if(NOT DEFINED GStreamer_ROOT_DIR)

@@ -1,9 +1,8 @@
 #!/bin/bash
 # Unified build entrypoint for the QGC Docker images (deploy/docker/Dockerfile).
 # The target is auto-detected from environment baked into each image stage:
-#   ANDROID_SDK_ROOT set -> Android APK        (target: android)
 #   SYSROOT set          -> aarch64 cross-build (target: linux-cross)
-#   neither              -> native x86_64 build (target: linux)
+#   otherwise            -> native x86_64 build (target: linux)
 set -euo pipefail
 
 # linuxdeploy/appimagetool are AppImages that FUSE-mount themselves; /dev/fuse
@@ -33,19 +32,7 @@ require_env() {
     done
 }
 
-if [[ -n "${ANDROID_SDK_ROOT:-}" ]]; then
-    ANDROID_ABIS="${ANDROID_ABIS:-arm64-v8a}"  # arm64-v8a, armeabi-v7a, or both (semicolon-separated)
-    require_env QT_HOST_PATH QT_ROOT_DIR_ARM64 ANDROID_SDK_ROOT
-    echo "Building QGroundControl for Android (${BUILD_TYPE})..."
-    "${QT_ROOT_DIR_ARM64}/bin/qt-cmake" -S /project/source -B /project/build -G Ninja \
-        -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" \
-        -DPython3_EXECUTABLE=/opt/qgc-venv/bin/python \
-        -DQT_HOST_PATH="${QT_HOST_PATH}" \
-        -DQT_ANDROID_ABIS="${ANDROID_ABIS}" \
-        -DANDROID_SDK_ROOT="${ANDROID_SDK_ROOT}" \
-        -DQT_ANDROID_SIGN_APK=OFF
-    cmake --build /project/build --target all --config "${BUILD_TYPE}" "${BUILD_PARALLEL[@]}"
-elif [[ -n "${SYSROOT:-}" ]]; then
+if [[ -n "${SYSROOT:-}" ]]; then
     require_env QT_HOST_PATH QT_ROOT_DIR SYSROOT
     # qt-cross.sh exports QT_HOST_PATH/QT_ROOT_DIR; an empty QT_HOST_PATH silently
     # breaks AUTOMOC with confusing "moc: bad input file" errors mid-build.

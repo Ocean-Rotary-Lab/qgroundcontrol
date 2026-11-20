@@ -16,25 +16,9 @@ DEFAULT_EXPORT_KEYS = [
     "qt.modules",
     "gstreamer.version.minimum",
     "gstreamer.version.default",
-    "gstreamer.version.macos",
-    "gstreamer.version.ios",
-    "gstreamer.version.android",
-    "gstreamer.version.windows",
-    "apple.xcode_version",
-    "apple.xcode_ios_version",
-    "apple.macos_deployment_target",
-    "apple.ios_deployment_target",
-    "android.ndk_version",
-    "android.ndk_full_version",
-    "android.java_version",
-    "android.platform",
-    "android.min_sdk",
-    "android.build_tools",
-    "android.cmdline_tools",
     "build.cmake_minimum_version",
     "build.platform_workflows",
 ]
-IOS_QT_MODULE_EXCLUDES = {"qtserialport"}
 
 
 def find_build_config(
@@ -106,21 +90,11 @@ def get_build_config_value(
     return str(value) if value is not None else default
 
 
-def derive_ios_qt_modules(qt_modules: str) -> str:
-    """Return the iOS-safe Qt module list."""
-    modules = [module for module in qt_modules.split() if module not in IOS_QT_MODULE_EXCLUDES]
-    return " ".join(modules)
-
-
 _EXPORT_KEY_ALIASES: dict[str, str] = {}
 
 _GSTREAMER_VERSION_ENV_NAMES: dict[str, str] = {
     "gstreamer.version.default": "GSTREAMER_VERSION",
     "gstreamer.version.minimum": "GSTREAMER_MINIMUM_VERSION",
-    "gstreamer.version.android": "GSTREAMER_ANDROID_VERSION",
-    "gstreamer.version.ios":     "GSTREAMER_IOS_VERSION",
-    "gstreamer.version.macos":   "GSTREAMER_MACOS_VERSION",
-    "gstreamer.version.windows": "GSTREAMER_WINDOWS_VERSION",
 }
 
 
@@ -149,9 +123,6 @@ def export_build_config_values(
 
 
 def github_output_values(values: dict[str, str]) -> dict[str, str]:
-    """Lowercase-key outputs for $GITHUB_OUTPUT, plus derived qt_modules_ios."""
+    """Lowercase-key outputs for $GITHUB_OUTPUT."""
     outputs = {key.lower(): value for key, value in sorted(values.items())}
-    qt_modules = values.get("QT_MODULES", "")
-    if qt_modules:
-        outputs["qt_modules_ios"] = derive_ios_qt_modules(qt_modules)
     return outputs

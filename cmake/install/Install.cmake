@@ -22,44 +22,16 @@ install(
 # ----------------------------------------------------------------------------
 # Qt Deployment Script Generation
 # ----------------------------------------------------------------------------
-set(deploy_tool_options_arg "")
-set(deploy_include_plugins "")
-
-if(MACOS OR WIN32)
-    list(APPEND deploy_tool_options_arg "-qmldir=${CMAKE_SOURCE_DIR}")
-    if(MACOS)
-        list(APPEND deploy_tool_options_arg "-appstore-compliant")
-    endif()
-    if(WIN32)
-        # windeployqt and qt6_deploy_qml_imports both deploy QML plugins into qml/
-        # and relock qtquick2plugin.dll; -no-quick-import lets CMake own QML deploy.
-        list(APPEND deploy_tool_options_arg "-no-quick-import")
-    endif()
-endif()
-
-if(NOT ANDROID AND NOT IOS)
-    set(deploy_include_plugins INCLUDE_PLUGINS qoffscreen)
-    if(LINUX)
-        # Wayland platform plugin (libqwayland.so)
-        list(APPEND deploy_include_plugins qwayland)
-    endif()
-endif()
-
-# First-pass filter for unused Qt plugins whose missing backing libs would trip
-# CPackDeb's shlibdeps; the post-deploy strip below is the real guarantee.
-set(deploy_exclude_plugins "")
-if(LINUX)
-    set(deploy_exclude_plugins EXCLUDE_PLUGINS
-        qsqlmysql qsqlpsql qsqlodbc qsqloci qsqlibase qsqlmimer qtiff)
-endif()
+set(deploy_include_plugins INCLUDE_PLUGINS qoffscreen qwayland)
+# Avoid deploying Qt plugins backed by optional system libraries.
+set(deploy_exclude_plugins EXCLUDE_PLUGINS
+    qsqlmysql qsqlpsql qsqlodbc qsqloci qsqlibase qsqlmimer qtiff)
 
 qt_generate_deploy_qml_app_script(
     TARGET ${CMAKE_PROJECT_NAME}
     OUTPUT_SCRIPT deploy_script
-    MACOS_BUNDLE_POST_BUILD
     NO_UNSUPPORTED_PLATFORM_ERROR
     DEPLOY_USER_QML_MODULES_ON_UNSUPPORTED_PLATFORM
-    DEPLOY_TOOL_OPTIONS ${deploy_tool_options_arg}
     ${deploy_include_plugins}
     ${deploy_exclude_plugins}
 )
@@ -87,47 +59,10 @@ if(LINUX)
     ]])
 endif()
 
-# GStreamer framework rpath fixup: component dylibs (libgstrtsp, libgstvideo, etc.)
-# are inside the framework's lib/ directory, but the binary's @rpath resolves to
-# Contents/Frameworks/ (flat). Add the framework lib path so dyld finds them.
-# Runs after Qt deploy to survive any rpath rewriting by macdeployqt.
-set(_qgc_gst_framework_bundle "")
-if(MACOS AND TARGET GStreamer::Layout)
-    get_target_property(_qgc_gst_framework_bundle GStreamer::Layout GSTREAMER_FRAMEWORK_BUNDLE)
-    if(_qgc_gst_framework_bundle STREQUAL "_qgc_gst_framework_bundle-NOTFOUND")
-        set(_qgc_gst_framework_bundle "")
-    endif()
-endif()
-if(MACOS AND _qgc_gst_framework_bundle)
-    install(CODE "
-        set(_binary \"\${CMAKE_INSTALL_PREFIX}/${CMAKE_PROJECT_NAME}.app/Contents/MacOS/${CMAKE_PROJECT_NAME}\")
-        if(EXISTS \"\${_binary}\")
-            execute_process(
-                COMMAND install_name_tool -add_rpath
-                    @executable_path/../Frameworks/GStreamer.framework/Versions/1.0/lib
-                    \"\${_binary}\"
-                ERROR_QUIET
-            )
-        endif()
-    ")
-endif()
-
-# ============================================================================
-# Platform-Specific Installation
-# ============================================================================
-
-# ----------------------------------------------------------------------------
-# Android Installation
-# ----------------------------------------------------------------------------
-if(ANDROID)
-    # Android deployment handled by Qt
-    # get_target_property(QGC_ANDROID_DEPLOY_FILE ${CMAKE_PROJECT_NAME} QT_ANDROID_DEPLOYMENT_SETTINGS_FILE)
-    # cmake_print_variables(QGC_ANDROID_DEPLOY_FILE)
-
 # ----------------------------------------------------------------------------
 # Linux Installation & AppImage Creation
 # ----------------------------------------------------------------------------
-elseif(LINUX)
+if(LINUX)
     configure_file(
         "${QGC_APPIMAGE_DESKTOP_ENTRY_PATH}"
         "${CMAKE_BINARY_DIR}/${QGC_PACKAGE_NAME}.desktop"
@@ -203,74 +138,6 @@ elseif(LINUX)
     # Native package (.deb/.rpm via CPack, Arch via makepkg) is built by the
     # shared qgc-package dispatch at the end of this file.
 
-# ----------------------------------------------------------------------------
-# Windows Installation & Installer Creation
-# ----------------------------------------------------------------------------
-elseif(WIN32)
-    # Pass variables to Windows installer creation script
-    if(CMAKE_CROSSCOMPILING)
-        set(_win_installer_out "${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}-installer-${CMAKE_HOST_SYSTEM_PROCESSOR}-${CMAKE_SYSTEM_PROCESSOR}.exe")
-    else()
-        set(_win_installer_out "${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}-installer-${CMAKE_SYSTEM_PROCESSOR}.exe")
-    endif()
-    install(CODE "
-        set(CMAKE_PROJECT_NAME \"${CMAKE_PROJECT_NAME}\")
-        set(CMAKE_PROJECT_VERSION \"${CMAKE_PROJECT_VERSION}\")
-        set(QGC_ORG_NAME \"${QGC_ORG_NAME}\")
-        set(QGC_WINDOWS_ICON_PATH \"${QGC_WINDOWS_ICON_PATH}\")
-        set(QGC_WINDOWS_INSTALL_HEADER_PATH \"${QGC_WINDOWS_INSTALL_HEADER_PATH}\")
-        set(QGC_WINDOWS_OUT \"${_win_installer_out}\")
-        set(QGC_WINDOWS_INSTALLER_SCRIPT \"${CMAKE_SOURCE_DIR}/deploy/windows/nullsoft_installer.nsi\")
-    ")
-    install(SCRIPT "${CMAKE_SOURCE_DIR}/cmake/install/CreateWinInstaller.cmake")
-
-# ----------------------------------------------------------------------------
-# macOS Installation, Code Signing & DMG Creation
-# ----------------------------------------------------------------------------
-elseif(MACOS)
-    # macdeployqt ignores INCLUDE_PLUGINS — manually deploy offscreen plugin
-    if(TARGET Qt6::QOffscreenIntegrationPlugin)
-        install(FILES "$<TARGET_FILE:Qt6::QOffscreenIntegrationPlugin>"
-            DESTINATION "${CMAKE_PROJECT_NAME}.app/Contents/PlugIns/platforms"
-        )
-    endif()
-
-    install(CODE "set(QGC_STAGING_BUNDLE_PATH \"${CMAKE_BINARY_DIR}/staging/${CMAKE_PROJECT_NAME}.app\")")
-
-    # Code signing
-    option(QGC_MACOS_SIGN_WITH_IDENTITY "Sign macOS bundle with developer identity (requires signing env vars)" OFF)
-    if(QGC_MACOS_SIGN_WITH_IDENTITY)
-        message(STATUS "QGC: macOS bundle will be signed with developer identity")
-        install(SCRIPT "${CMAKE_SOURCE_DIR}/cmake/install/SignMacBundle.cmake")
-    else()
-        message(STATUS "QGC: macOS bundle will be signed with ad-hoc signature")
-        install(CODE "
-            message(STATUS \"QGC: Signing macOS bundle (ad-hoc)\")
-            execute_process(
-                COMMAND codesign --deep --force -s - \"\${QGC_STAGING_BUNDLE_PATH}\"
-                COMMAND_ERROR_IS_FATAL ANY
-            )
-            execute_process(
-                COMMAND codesign --verify --deep --verbose=2 \"\${QGC_STAGING_BUNDLE_PATH}\"
-                COMMAND_ERROR_IS_FATAL ANY
-            )
-        ")
-    endif()
-
-    find_program(CREATE_DMG_PROGRAM create-dmg)
-    if(NOT CREATE_DMG_PROGRAM)
-        message(STATUS "QGC: Fetching create-dmg tool via CPM")
-        CPMAddPackage(
-            NAME create-dmg
-            GITHUB_REPOSITORY create-dmg/create-dmg
-            GIT_TAG v1.2.3
-            DOWNLOAD_ONLY YES
-        )
-        set(CREATE_DMG_PROGRAM "${create-dmg_SOURCE_DIR}/create-dmg")
-    endif()
-
-    install(CODE "set(CREATE_DMG_PROGRAM \"${CREATE_DMG_PROGRAM}\")")
-    install(SCRIPT "${CMAKE_SOURCE_DIR}/cmake/install/CreateMacDMG.cmake")
 endif()
 
 # ============================================================================
@@ -285,16 +152,6 @@ if(QGC_CPACK_GENERATOR STREQUAL "DEB")
     set(_qgc_cpack_module "CPack/CreateCPackDeb.cmake")
 elseif(QGC_CPACK_GENERATOR STREQUAL "RPM")
     set(_qgc_cpack_module "CPack/CreateCPackRPM.cmake")
-elseif(QGC_CPACK_GENERATOR STREQUAL "NSIS")
-    set(_qgc_cpack_module "CPack/CreateCPackNSIS.cmake")
-elseif(QGC_CPACK_GENERATOR STREQUAL "IFW")
-    set(_qgc_cpack_module "CPack/CreateCPackIFW.cmake")
-elseif(QGC_CPACK_GENERATOR STREQUAL "DragNDrop")
-    set(_qgc_cpack_module "CPack/CreateCPackDMG.cmake")
-elseif(QGC_CPACK_GENERATOR STREQUAL "Bundle")
-    set(_qgc_cpack_module "CPack/CreateCPackBundle.cmake")
-elseif(QGC_CPACK_GENERATOR STREQUAL "productbuild")
-    set(_qgc_cpack_module "CPack/CreateCPackProductBuild.cmake")
 elseif(QGC_CPACK_GENERATOR STREQUAL "TXZ")
     set(_qgc_cpack_module "CPack/CreateCPackArchive.cmake")
 endif()
@@ -320,7 +177,7 @@ if(_qgc_cpack_module)
     )
 elseif(LINUX AND QGC_LINUX_DISTRO_FAMILY STREQUAL "arch")
     include("${CMAKE_SOURCE_DIR}/cmake/install/CreateArchPackage.cmake")
-elseif(LINUX OR WIN32 OR MACOS)
+elseif(LINUX)
     add_custom_target(qgc-package
         COMMAND "${CMAKE_COMMAND}" -E echo
             "QGC: QGC_CPACK_GENERATOR unset; the default installer is produced by 'cmake --install'."

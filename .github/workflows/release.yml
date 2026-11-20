@@ -83,9 +83,6 @@ jobs:
         with:
           workflow-names: |
             Linux
-            Windows
-            MacOS
-            Android
           timeout-minutes: 170
           poll-interval-minutes: 5
 
@@ -127,10 +124,7 @@ jobs:
         run: |
           python3 "${GITHUB_WORKSPACE}/.github/scripts/find_artifact.py" \
             --build-dir artifacts \
-            --match "appimage=QGroundControl*.AppImage" \
-            --match "apk=*.apk" \
-            --match "dmg=*.dmg" \
-            --match "exe=QGroundControl*.exe"
+            --match "appimage=QGroundControl*.AppImage"
 
       # Source-tree SBOM is kept as a release artifact for source traceability,
       # but it is NOT used as the attestation evidence (per-platform SBOMs are).
@@ -173,60 +167,13 @@ jobs:
           scan-path: extracted/linux/squashfs-root
         continue-on-error: true
 
-      - name: Extract APK contents
-        if: steps.paths.outputs.apk != ''
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p extracted/android
-          unzip -q -o "${STEPS_PATHS_OUTPUTS_APK}" -d extracted/android
-        env:
-          STEPS_PATHS_OUTPUTS_APK: ${{ steps.paths.outputs.apk }}
-
-      - name: Attest Android APK
-        id: attest-android
-        if: steps.paths.outputs.apk != ''
-        uses: ./.github/actions/attest-sbom
-        with:
-          subject-path: ${{ steps.paths.outputs.apk }}
-          subject-name: android-apk
-          scan-path: extracted/android
-        continue-on-error: true
-
-      # DMG/EXE: Linux runner can't deeply extract these; Syft scans the file
-      # best-effort. For full coverage, mac/Windows builds should emit their
-      # own SBOM as an artifact (followup).
-      - name: Attest macOS DMG
-        id: attest-macos
-        if: steps.paths.outputs.dmg != ''
-        uses: ./.github/actions/attest-sbom
-        with:
-          subject-path: ${{ steps.paths.outputs.dmg }}
-          subject-name: macos-dmg
-        continue-on-error: true
-
-      - name: Attest Windows EXE
-        id: attest-windows
-        if: steps.paths.outputs.exe != ''
-        uses: ./.github/actions/attest-sbom
-        with:
-          subject-path: ${{ steps.paths.outputs.exe }}
-          subject-name: windows-exe
-        continue-on-error: true
-
       - name: Upload to Release
         uses: softprops/action-gh-release@v3
         with:
           tag_name: v${{ needs.semantic-release.outputs.version }}
           files: |
             artifacts/**/*.AppImage
-            artifacts/**/*.dmg
-            artifacts/**/*.exe
-            artifacts/**/*.apk
             sbom-source.spdx.json
             sbom-source.cdx.json
             ${{ steps.attest-linux.outputs.sbom-path }}
-            ${{ steps.attest-android.outputs.sbom-path }}
-            ${{ steps.attest-macos.outputs.sbom-path }}
-            ${{ steps.attest-windows.outputs.sbom-path }}
           fail_on_unmatched_files: false

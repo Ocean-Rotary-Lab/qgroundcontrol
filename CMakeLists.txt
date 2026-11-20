@@ -64,18 +64,10 @@ endif()
 # Project Configuration
 # ============================================================================
 
-# ----------------------------------------------------------------------------
-# Apple-Specific Pre-Project Settings
-# ----------------------------------------------------------------------------
-# CMAKE_SYSTEM_NAME is empty before project(), so it cannot be used to detect
-# macOS here. Gate on the caller not having chosen architectures instead: iOS
-# builds (preset and CI) pass arm64-only CMAKE_OSX_ARCHITECTURES explicitly,
-# which must not be clobbered with x86_64h;arm64.
-if(APPLE AND NOT CMAKE_OSX_ARCHITECTURES)
-    set(CMAKE_OSX_DEPLOYMENT_TARGET "${QGC_CONFIG_MACOS_DEPLOYMENT_TARGET}" CACHE STRING "macOS minimum deployment target")
-    if(QGC_MACOS_UNIVERSAL_BUILD)
-        set(CMAKE_OSX_ARCHITECTURES "x86_64h;arm64")
-    endif()
+# This fork is built and packaged for Linux only.
+if(NOT CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux" OR
+   (DEFINED CMAKE_SYSTEM_NAME AND NOT CMAKE_SYSTEM_NAME STREQUAL "Linux"))
+    message(FATAL_ERROR "QGroundControl in this repository supports Linux builds only")
 endif()
 
 # ----------------------------------------------------------------------------
@@ -142,11 +134,7 @@ include(QGCQmlCodegen)
 # ----------------------------------------------------------------------------
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIG>/lib")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIG>")
-if(ANDROID)
-    set(CMAKE_PDB_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
-else()
-    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIG>")
-endif()
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIG>")
 
 # ----------------------------------------------------------------------------
 # CMake Policies
@@ -169,24 +157,6 @@ set(CMAKE_POLICY_DEFAULT_CMP0075 NEW)
 if(POLICY CMP0194)
     cmake_policy(SET CMP0194 NEW)
     set(CMAKE_POLICY_DEFAULT_CMP0194 NEW)
-endif()
-
-# ============================================================================
-# Vulkan Headers (needed by Qt on Windows when Vulkan SDK is not installed)
-# ============================================================================
-if(WIN32 AND NOT TARGET Vulkan::Headers)
-    find_package(Vulkan QUIET COMPONENTS Headers)
-    if(NOT Vulkan_FOUND)
-        CPMAddPackage(
-            NAME VulkanHeaders
-            GITHUB_REPOSITORY KhronosGroup/Vulkan-Headers
-            GIT_TAG vulkan-sdk-1.4.341.0
-            SYSTEM YES
-        )
-        if(VulkanHeaders_SOURCE_DIR)
-            set(Vulkan_INCLUDE_DIR "${VulkanHeaders_SOURCE_DIR}/include" CACHE PATH "" FORCE)
-        endif()
-    endif()
 endif()
 
 # ============================================================================
@@ -243,7 +213,7 @@ find_package(Qt6
         Test
 )
 
-if(LINUX AND NOT ANDROID)
+if(LINUX)
     find_package(Qt6 ${QGC_QT_MINIMUM_VERSION}...${QGC_QT_MAXIMUM_VERSION} COMPONENTS WaylandClient)
 endif()
 
@@ -299,8 +269,6 @@ include(Hardening)
 qgc_apply_global_hardening()
 
 qt_add_executable(${CMAKE_PROJECT_NAME}
-    WIN32          # Windows GUI application
-    MACOSX_BUNDLE  # macOS application bundle
     ${QGC_RESOURCES}
 )
 
@@ -319,15 +287,7 @@ qgc_apply_warning_flags()
 # ----------------------------------------------------------------------------
 # Platform-Specific Configuration
 # ----------------------------------------------------------------------------
-if(WIN32)
-    include(Windows)
-elseif(APPLE)
-    include(Apple)
-elseif(ANDROID)
-    include(Android)
-elseif(LINUX)
-    include(Linux)
-endif()
+include(Linux)
 
 # ----------------------------------------------------------------------------
 # QML Module Configuration
