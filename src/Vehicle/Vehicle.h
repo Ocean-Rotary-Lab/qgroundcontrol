@@ -247,6 +247,8 @@ public:
     Q_PROPERTY(FactGroup*           distanceSensors READ distanceSensorFactGroup    CONSTANT)
     Q_PROPERTY(FactGroup*           localPosition   READ localPositionFactGroup     CONSTANT)
     Q_PROPERTY(FactGroup*           localPositionSetpoint READ localPositionSetpointFactGroup CONSTANT)
+    Q_PROPERTY(QVariantList          manualControlAxes READ manualControlAxes NOTIFY manualControlAxesChanged)
+    Q_PROPERTY(qint64                manualControlUpdatedMs READ manualControlUpdatedMs NOTIFY manualControlAxesChanged)
     Q_PROPERTY(FactGroup*           hygrometer      READ hygrometerFactGroup        CONSTANT)
     Q_PROPERTY(FactGroup*           generator       READ generatorFactGroup         CONSTANT)
     Q_PROPERTY(FactGroup*           efi             READ efiFactGroup               CONSTANT)
@@ -421,6 +423,8 @@ public:
     void updateFlightDistance(double distance);
 
     void sendJoystickDataThreadSafe (float roll, float pitch, float yaw, float thrust, quint16 buttons, quint16 buttons2, float pitchExtension, float rollExtension, float aux1, float aux2, float aux3, float aux4, float aux5, float aux6);
+    QVariantList manualControlAxes() const { return _manualControlAxes; }
+    qint64 manualControlUpdatedMs() const { return _manualControlUpdatedMs; }
     /// Sends RC_CHANNELS_OVERRIDE for joystick aux axes mapped to RC channels 5–10 only.
     static constexpr int kAuxRcOverrideChannelCount = 6; ///< Number of RC channels overridden (channels 5–10)
     void sendJoystickAuxRcOverrideThreadSafe(const std::array<uint16_t, kAuxRcOverrideChannelCount> &channelValues, const std::array<bool, kAuxRcOverrideChannelCount> &channelEnabled, bool useRcOverride);
@@ -799,6 +803,7 @@ signals:
     /// Filtered RC channel values coming from RC_CHANNELS message: clamped 1000:2000
     ///     @param channelValues The clamped values for rc channels
     void rcChannelsClampedChanged(QVector<int> channelValues);
+    void manualControlAxesChanged();
 
     /// New SERVO output values coming from SERVO_OUTPUT_RAW message
     ///     @param servoValues The current servo output values in microseconds (0-15 -> SERVO1..SERVO16). Invalid values are -1.
@@ -1110,6 +1115,8 @@ public:
 
     // Live SERVO_OUTPUT_RAW values (microseconds). Indexed 0..15 -> SERVO1..SERVO16.
     QVector<int>                       _servoOutputRawValues = QVector<int>(16, -1);
+    QVariantList                       _manualControlAxes;
+    qint64                             _manualControlUpdatedMs = 0;
 
     // Dynamic FactGroups
     BatteryFactGroupListModel*          _batteryFactGroupListModel  = nullptr;

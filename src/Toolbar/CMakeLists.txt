@@ -64,6 +64,7 @@ qt_add_resources(${CMAKE_PROJECT_NAME} toolbar_qmlimages
         "${CMAKE_SOURCE_DIR}/src/Toolbar/Images/Connect.svg"
         "${CMAKE_SOURCE_DIR}/src/Toolbar/Images/Disarmed.svg"
         "${CMAKE_SOURCE_DIR}/src/Toolbar/Images/Disconnect.svg"
+        "${CMAKE_SOURCE_DIR}/src/Toolbar/Images/DmuCrest.png"
         "${CMAKE_SOURCE_DIR}/src/Toolbar/Images/EscIndicator.svg"
         "${CMAKE_SOURCE_DIR}/src/Toolbar/Images/Gears.svg"
         "${CMAKE_SOURCE_DIR}/src/Toolbar/Images/Gps.svg"

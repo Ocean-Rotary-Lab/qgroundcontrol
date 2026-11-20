@@ -95,6 +95,11 @@ Item {
             property var    hiddenFlightModesList:    []
 
             Component.onCompleted: {
+                if (activeVehicle && activeVehicle.sub) {
+                    // The ArduSub mode menu is fixed to Manual and Depth Hold.
+                    control.allowEditMode = false
+                    return
+                }
                 // Hidden flight modes are classified by firmware and vehicle class
                 var hiddenFlightModesPropPrefix
                 if (activeVehicle.px4Firmware) {

@@ -16,13 +16,8 @@ Item {
 
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
     property bool   _communicationLost: _activeVehicle ? _activeVehicle.vehicleLinkManager.communicationLost : false
-    property color  _mainStatusBGColor: qgcPal.brandingPurple
     property real   _leftRightMargin:   ScreenTools.defaultFontPixelWidth * 0.75
     property var    _guidedController:  globals.guidedControllerFlyView
-
-    function dropMainStatusIndicatorTool() {
-        mainStatusIndicator.dropMainStatusIndicator();
-    }
 
     QGCPalette { id: qgcPal }
 
@@ -41,26 +36,8 @@ Item {
                 width:  leftPanelLayout.implicitWidth
                 height: parent.height
 
-                // Gradient background behind Q button and main status indicator
                 Rectangle {
-                    id:         gradientBackground
-                    height:     parent.height
-                    width:      mainStatusLayout.width
-                    opacity:    qgcPal.windowTransparent.a
-
-                    gradient: Gradient {
-                        orientation: Gradient.Horizontal
-                        GradientStop { position: 0; color: _mainStatusBGColor }
-                        //GradientStop { position: qgcButton.x + qgcButton.width; color: _mainStatusBGColor }
-                        GradientStop { position: 1; color: qgcPal.window }
-                    }
-                }
-
-                // Standard toolbar background to the right of the gradient
-                Rectangle {
-                    anchors.left:   gradientBackground.right
-                    anchors.right:  parent.right
-                    height:         parent.height
+                    anchors.fill:   parent
                     color:          qgcPal.windowTransparent
                 }
 
@@ -70,23 +47,37 @@ Item {
                     spacing:    ScreenTools.defaultFontPixelWidth * 2
 
                     RowLayout {
-                        id:         mainStatusLayout
-                        height:     parent.height
-                        spacing:    0
+                        Layout.fillHeight: true
+                        spacing: ScreenTools.defaultFontPixelWidth * 0.75
 
-                        QGCToolBarButton {
-                            id:                 qgcButton
-                            objectName:         "toolbar_qgcLogo"
-                            Layout.fillHeight:  true
-                            icon.source:        "/res/QGCLogoFull.svg"
-                            logo:               true
-                            onClicked:          mainWindow.showToolSelectDialog()
+                        Image {
+                            Layout.preferredWidth: ScreenTools.defaultFontPixelHeight * 2.45
+                            Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 2.45
+                            Layout.alignment: Qt.AlignVCenter
+                            source: "/qmlimages/DmuCrest.png"
+                            fillMode: Image.PreserveAspectFit
+                            smooth: true
+                            mipmap: true
                         }
 
-                        MainStatusIndicator {
-                            id:                 mainStatusIndicator
-                            objectName:         "toolbar_mainStatusIndicator"
-                            Layout.fillHeight:  true
+                        ColumnLayout {
+                            Layout.alignment: Qt.AlignVCenter
+                            spacing: 0
+
+                            QGCLabel {
+                                text: qsTr("大连海事大学")
+                                font.family: "Noto Sans CJK SC"
+                                font.pixelSize: ScreenTools.defaultFontPixelHeight * 0.78
+                                color: qgcPal.text
+                            }
+
+                            QGCLabel {
+                                text: qsTr("海洋转子实验室")
+                                font.family: "Noto Sans CJK SC"
+                                font.pixelSize: ScreenTools.defaultFontPixelHeight * 1.05
+                                font.bold: true
+                                color: qgcPal.text
+                            }
                         }
                     }
 

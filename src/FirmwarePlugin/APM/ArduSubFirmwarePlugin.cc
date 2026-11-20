@@ -111,16 +111,16 @@ ArduSubFirmwarePlugin::ArduSubFirmwarePlugin(QObject *parent)
     static FlightModeList availableFlightModes = {
         // Mode Name                , Custom Mode                  CanBeSet  adv
         { _manualFlightMode         , APMSubMode::MANUAL            , true , true },
-        { _stabilizeFlightMode      , APMSubMode::STABILIZE         , true , true },
-        { _acroFlightMode           , APMSubMode::ACRO              , true , true },
+        { _stabilizeFlightMode      , APMSubMode::STABILIZE         , false, true },
+        { _acroFlightMode           , APMSubMode::ACRO              , false, true },
         { _altHoldFlightMode        , APMSubMode::ALT_HOLD          , true , true },
-        { _autoFlightMode           , APMSubMode::AUTO              , true , true },
-        { _guidedFlightMode         , APMSubMode::GUIDED            , true , true },
-        { _circleFlightMode         , APMSubMode::CIRCLE            , true , true },
-        { _surfaceFlightMode        , APMSubMode::SURFACE           , true , true },
-        { _posHoldFlightMode        , APMSubMode::POSHOLD           , true , true },
+        { _autoFlightMode           , APMSubMode::AUTO              , false, true },
+        { _guidedFlightMode         , APMSubMode::GUIDED            , false, true },
+        { _circleFlightMode         , APMSubMode::CIRCLE            , false, true },
+        { _surfaceFlightMode        , APMSubMode::SURFACE           , false, true },
+        { _posHoldFlightMode        , APMSubMode::POSHOLD           , false, true },
         { _motorDetectionFlightMode , APMSubMode::MOTORDETECTION    , false, true },
-        { _surftrakFlightMode       , APMSubMode::SURFTRAK          , true , true },
+        { _surftrakFlightMode       , APMSubMode::SURFTRAK          , false, true },
     };
     updateAvailableFlightModes(availableFlightModes);
 

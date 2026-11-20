@@ -3021,6 +3021,17 @@ void Vehicle::sendJoystickDataThreadSafe(float roll, float pitch, float yaw, flo
         outgoingExtensionValues[7]
     );
     sendMessageOnLinkThreadSafe(sharedLink.get(), message);
+
+    // The joystick may call this from its polling thread. Publish only the six
+    // MANUAL_CONTROL axes on Vehicle's thread for QML bindings.
+    const QVariantList axes{newPitchCommand / axesScaling, newRollCommand / axesScaling,
+                            newThrustCommand / axesScaling, newYawCommand / axesScaling,
+                            pitchExtension, rollExtension};
+    QMetaObject::invokeMethod(this, [this, axes]() {
+        _manualControlAxes = axes;
+        _manualControlUpdatedMs = QDateTime::currentMSecsSinceEpoch();
+        emit manualControlAxesChanged();
+    }, Qt::QueuedConnection);
 }
 
 // Sends RC_CHANNELS_OVERRIDE for joystick aux axes mapped to RC channels 5–10 only.

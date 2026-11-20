@@ -8,6 +8,7 @@ Item {
 
     property Item pipView
     property Item pipState: videoPipState
+    property bool embedded: false
 
     PipState {
         id:         videoPipState
@@ -43,8 +44,8 @@ Item {
     FlightDisplayViewVideo {
         id:             videoStreaming
         anchors.fill:   parent
-        useSmallFont:   _root.pipState.state !== _root.pipState.fullState
-        visible:        QGroundControl.videoManager.isStreamSource || QGroundControl.videoManager.isUvc
+        useSmallFont:   !_root.embedded && _root.pipState.state !== _root.pipState.fullState
+        visible:        _root.embedded || QGroundControl.videoManager.isStreamSource || QGroundControl.videoManager.isUvc
     }
 
     QGCLabel {
@@ -85,7 +86,7 @@ Item {
     MouseArea {
         id:                         flyViewVideoMouseArea
         anchors.fill:               parent
-        enabled:                    pipState.state === pipState.fullState
+        enabled:                    _root.embedded || pipState.state === pipState.fullState
 
         property real _pressX:      0
         property real _pressY:      0

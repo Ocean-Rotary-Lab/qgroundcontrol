@@ -376,7 +376,8 @@ ApplicationWindow {
 
     function showToolSelectDialog() {
         if (mainWindow.allowViewSwitch()) {
-            mainWindow.showIndicatorDrawer(toolSelectComponent, null)
+            mainWindow.closeIndicatorDrawer()
+            mainWindow.showFlyView()
         }
     }
 
@@ -397,13 +398,6 @@ ApplicationWindow {
         contentItem: QGCLabel {
             text:   validationErrorToast.text
             color:  qgcPal.alertText
-        }
-    }
-
-    Component {
-        id: toolSelectComponent
-
-        SelectViewDropdown {
         }
     }
 
@@ -506,10 +500,8 @@ ApplicationWindow {
 
         function acknowledge() {
             close()
-            if (additionalCriticalMessagesReceived) {
-                additionalCriticalMessagesReceived = false
-                flyView.dropMainStatusIndicatorTool()
-            } else if (QGroundControl.multiVehicleManager.activeVehicle) {
+            additionalCriticalMessagesReceived = false
+            if (QGroundControl.multiVehicleManager.activeVehicle) {
                 QGroundControl.multiVehicleManager.activeVehicle.resetErrorLevelMessages()
             }
         }

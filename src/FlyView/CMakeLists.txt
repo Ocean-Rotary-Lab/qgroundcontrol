@@ -9,9 +9,13 @@ qt_add_qml_module(FlyViewModule
     URI QGroundControl.FlyView
     VERSION 1.0
     RESOURCE_PREFIX /qml
+    SOURCES
+        RobotStlGeometry.cc
+        RobotStlGeometry.h
     QML_FILES
         CustomGuidedActionsController.qml
         DefaultChecklist.qml
+        DepthViewPanel.qml
         FixedWingChecklist.qml
         FlightDisplayViewDummy.qml
         FlightDisplayViewVideoOutput.qml
@@ -64,14 +68,17 @@ qt_add_qml_module(FlyViewModule
         ProximityRadarValues.qml
         ProximityRadarVideoView.qml
         RoverChecklist.qml
+        RobotStatePanel.qml
+        SixDofStatusPanel.qml
         SubChecklist.qml
         TelemetryValuesBar.qml
         TerrainProgress.qml
         VehicleWarnings.qml
         VirtualJoystick.qml
         VTOLChecklist.qml
-    NO_PLUGIN
 )
+
+target_link_libraries(FlyViewModule PUBLIC Qt6::Quick3D)
 
 qt_add_resources(FlyViewModule flyview_resources
     PREFIX "/res"
