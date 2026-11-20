@@ -5,6 +5,7 @@
 #include <QtCore/QDir>
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
+#include <QtCore/QStringList>
 #include <QtCore/QtEndian>
 #include <QtGui/QVector3D>
 
@@ -47,11 +48,16 @@ RobotStlGeometry::RobotStlGeometry(QQuick3DObject *parent)
 QUrl RobotStlGeometry::defaultSource() const
 {
     QDir directory(QCoreApplication::applicationDirPath());
-    const QString relativePath = QStringLiteral("robot_visual/single_link_version/meshes/base_link.STL");
+    const QStringList relativePaths{
+        QStringLiteral("qgroundcontrol/robot_visual/single_link_version/meshes/base_link.STL"),
+        QStringLiteral("robot_visual/single_link_version/meshes/base_link.STL"),
+    };
     do {
-        const QFileInfo meshFile(directory.filePath(relativePath));
-        if (meshFile.isFile()) {
-            return QUrl::fromLocalFile(meshFile.absoluteFilePath());
+        for (const QString &relativePath : relativePaths) {
+            const QFileInfo meshFile(directory.filePath(relativePath));
+            if (meshFile.isFile()) {
+                return QUrl::fromLocalFile(meshFile.absoluteFilePath());
+            }
         }
     } while (directory.cdUp());
 

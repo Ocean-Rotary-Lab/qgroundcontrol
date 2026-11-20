@@ -80,6 +80,17 @@ qt_add_qml_module(FlyViewModule
 
 target_link_libraries(FlyViewModule PUBLIC Qt6::Quick3D)
 
+install(FILES
+    "${CMAKE_SOURCE_DIR}/robot_visual/single_link_version/meshes/base_link.STL"
+    "${CMAKE_SOURCE_DIR}/robot_visual/single_link_version/meshes/base_link.STL.colors"
+    DESTINATION "robot_visual/single_link_version/meshes"
+)
+
+install(FILES
+    "${CMAKE_SOURCE_DIR}/robot_visual/single_link_version/urdf/robot.urdf"
+    DESTINATION "robot_visual/single_link_version/urdf"
+)
+
 qt_add_resources(FlyViewModule flyview_resources
     PREFIX "/res"
     BASE "${CMAKE_SOURCE_DIR}/resources"
